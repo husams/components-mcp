@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "components_registiry": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "/Users/husam/workspace/mcp-servers/components-mcp",
+        "--refresh",
+        "components-mcp"
+      ],
+      "env": {}
+    }
+  }
+}
