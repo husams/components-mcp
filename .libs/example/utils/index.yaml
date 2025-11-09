@@ -1,0 +1,5 @@
+functions:
+  - name: example.utils.text_utils.format_text
+    description: Format text with various options (uppercase, lowercase, title case)
+  - name: example.utils.stats_utils.calculate_stats
+    description: Calculate basic statistics from a list of numbers

@@ -1,0 +1,3 @@
+app:
+  name: example.email_app.main.main
+  description: Email application with send, list, and search capabilities

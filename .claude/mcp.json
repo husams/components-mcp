@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "library-mcp": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/Users/husam/workspace/mcp-servers/library-mcp",
+        "run",
+        "python",
+        "-m",
+        "library_mcp.server"
+      ],
+      "env": {
+        "COMPONENT_DIR": "${COMPONENT_DIR:-$HOME/.cache/agent-tools}"
+      }
+    }
+  }
+}
