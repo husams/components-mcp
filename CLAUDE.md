@@ -257,8 +257,8 @@ def main(action: str, **kwargs) -> dict:
 
 3. **Modular Design**
    - All reusable logic lives under `.libs/<category>/<feature>/` (physical directory).
-   - Each feature MUST have its own local `index.yaml` file at `.libs/<category>/<feature>/index.yaml`.
-   - A single root `.libs/index.yaml` aggregates all available components with import paths (WITHOUT `libs.` prefix).
+   - Each feature MUST have its own `index.yaml` file in the SAME directory as the Python module files (`.py` files).
+   - **IMPORTANT**: There is NO root `.libs/index.yaml` file. Each `index.yaml` is local to its feature/app directory.
    - Components are imported as `from <category>.<feature>.module import <function_name>` with `PYTHONPATH=.libs` set.
    - Implementation code MUST go in dedicated module files (e.g., `main.py`, `operations.py`, `utils.py`), NEVER in `__init__.py`.
 
@@ -281,36 +281,11 @@ def main(action: str, **kwargs) -> dict:
 
 ## 🗂️ index.yaml Schema & Placement Rules
 
-### Root index.yaml
-
-The root `.libs/index.yaml` contains a flat list of all available components with their fully qualified import paths.
-
-Required keys:
-- `functions`: Array of entries with:
-  - `name`: Fully qualified Python import path WITHOUT `libs.` prefix
-  - `description`: Concise description of what the component does
-
-**Example `.libs/index.yaml`:**
-```yaml
-functions:
-  # Function Components (multiple functions per feature)
-  - name: example.utils.text_utils.format_text
-    description: Format text with various options (uppercase, lowercase, title case)
-  - name: example.utils.text_utils.truncate_text
-    description: Truncate text to specified length with ellipsis
-  - name: example.utils.stats_utils.calculate_stats
-    description: Calculate basic statistics from a list of numbers
-
-  # App Components (single main entry point)
-  - name: example.email_app.main.main
-    description: Email application with send, list, and search capabilities
-  - name: example.file_processor.main.main
-    description: File processing application with compress, extract, and list operations
-```
-
-### Local index.yaml Placement Rules
+### index.yaml Placement Rules
 
 **CRITICAL: Every feature/app directory MUST have an index.yaml file in the same directory where Python module files are located.**
+
+**IMPORTANT: There is NO root `.libs/index.yaml` file. Component discovery and aggregation is handled by the MCP server, which scans all `index.yaml` files in feature/app directories and provides a unified component listing through the MCP tools.**
 
 **Directory Structure Concepts:**
 - **Category directory**: Top-level organizational container (e.g., `.libs/example/`, `.libs/google_services/`, `.libs/utils/`)
@@ -350,8 +325,7 @@ app:
 **Correct Structure:**
 ```
 .libs/
-├── index.yaml                                # Root registry (all components)
-├── example/                                  # Category directory
+├── example/                                  # Category directory (NO index.yaml here)
 │   ├── __init__.py                           # Category package init
 │   ├── utils/                                # Sub-category (optional)
 │   │   ├── __init__.py                       # Sub-category package init
@@ -411,9 +385,7 @@ When you need reusable library functions:
 
 4. Create implementation in dedicated module files (NOT `__init__.py`)
 
-5. Update **BOTH** index.yaml files:
-   - Local: `.libs/<category>/<feature>/index.yaml`
-   - Root: `.libs/index.yaml`
+5. Create the `index.yaml` file in the feature directory (same directory as the `.py` module files)
 
 **Example - Creating text_utils function component:**
 
@@ -469,9 +441,7 @@ When you need a complete application with unified interface:
 
 4. Implement main function with action dispatcher pattern
 
-5. Update **BOTH** index.yaml files:
-   - Local: `.libs/<category>/<app_name>/index.yaml`
-   - Root: `.libs/index.yaml`
+5. Create the `index.yaml` file in the app directory (same directory as the `.py` module files)
 
 **Example - Creating email_app application:**
 
