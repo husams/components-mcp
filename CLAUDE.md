@@ -43,14 +43,33 @@ This returns:
 
 ### Session Enforcement & Response Order
 
-Before responding to ANY user task, VERIFY that a component listing has been obtained in this session. If not, list components now (exactly once unless components change).
+**CRITICAL: Before responding to ANY user task, you MUST use MCP tools for component discovery. NEVER use manual file scanning, directory walking, or CLI commands.**
 
-Required response order:
-1. COMPONENT LIST (if first time this session or after adding a component)
-2. PLAN (numbered high-level steps referencing component names)
-3. CODE (heredoc execution or reusable component creation)
+**MANDATORY First Action:**
+At the start of EVERY session (or after adding components), you MUST call the MCP component registry tools. This is NON-NEGOTIABLE.
 
-**Do NOT use manual file scanning, CLI scripts, or directory walking for discovery. Only use MCP tools.**
+**FORBIDDEN Actions for Discovery:**
+- ❌ NEVER use `find` commands to locate components
+- ❌ NEVER use `ls` or `tree` to browse .libs directory
+- ❌ NEVER use `Read` tool to scan index.yaml files directly
+- ❌ NEVER use `Grep` to search for components
+- ❌ NEVER use `Bash` to inspect directory structure
+- ❌ NEVER use `fastmcp inspect` or similar CLI tools
+- ❌ NEVER manually read project files to discover components
+
+**REQUIRED Actions for Discovery:**
+- ✅ ALWAYS start by calling MCP tools (tool names depend on MCP server configuration)
+- ✅ ONLY use MCP-provided tools like `list_components` and `get_details`
+- ✅ These tools are prefixed based on MCP server name (e.g., `mcp__server_name__list_components`)
+
+**Required Response Order:**
+1. **COMPONENT LIST** (if first time this session or after adding a component)
+   - Use MCP tools ONLY - no manual scanning
+2. **PLAN** (numbered high-level steps referencing component names)
+3. **CODE** (heredoc execution or reusable component creation)
+
+**Violation Consequences:**
+If you use manual file scanning instead of MCP tools, you are violating the core architecture principle and must immediately stop and correct your approach.
 
 ---
 
@@ -548,15 +567,22 @@ with open(output_dir / 'result.json', 'w') as f:
 
 ## 🔒 Hard Constraints
 
-MUST:
-- Use MCP tools for component discovery (NEVER manual scanning)
-- Call `mcp__components_registiry__list_components()` at session start
-- Use `mcp__components_registiry__get_details()` for component information
-- No ad-hoc scanning or CLI scripts for discovery
-- Limit exploration scope
+**ABSOLUTE REQUIREMENTS - ZERO TOLERANCE:**
+
+### Component Discovery (HIGHEST PRIORITY)
+- ✅ **MUST** use MCP tools EXCLUSIVELY for component discovery
+- ✅ **MUST** call MCP `list_components` tool at session start (tool name varies by MCP server)
+- ✅ **MUST** use MCP `get_details` tool for component information
+- ❌ **FORBIDDEN**: Manual scanning, file reading, CLI commands, directory walking for discovery
+- ❌ **FORBIDDEN**: Using Read/Bash/Grep/Glob/Find to discover components
+- ❌ **FORBIDDEN**: Any discovery method other than MCP tools
+
+### Execution & Imports
 - Use heredoc with PYTHONPATH=.libs for transient execution
 - Import WITHOUT `libs.` prefix
 - Avoid eval/exec strings
+
+### Component Structure
 - **ALWAYS create feature/app directory structure `.libs/<category>/<feature>/`**
 - **EVERY feature/app directory MUST have index.yaml in same directory as modules**
 - **Function components use `functions:` array with multiple entries**
@@ -564,9 +590,16 @@ MUST:
 - Update BOTH local and root `index.yaml` for all components
 - **NEVER put modules directly under category directories**
 - **NEVER put implementation in `__init__.py`**
+
+### File Organization
 - **`.libs/` ONLY for Python modules**
 - **Temporary/output files go to `.output/`**
 - Confine module writes to `.libs/` and output writes to `.output/`
+
+### Exploration Limits
+- Limit exploration scope to MCP-provided component information
+- No ad-hoc scanning or bulk enumeration
+- Derive all actions from MCP component list and explicit user requirements
 
 ---
 
@@ -626,14 +659,58 @@ MUST:
 
 ## 🚫 Scope & Exploration Limits
 
-Exploration is constrained to what is necessary for the immediate task:
+**MCP-FIRST ARCHITECTURE - STRICT ENFORCEMENT:**
 
-1. Primary source of structure is the MCP component listing output.
-2. DO NOT recursively browse or read arbitrary non-component directories/files unless:
-   - (a) A referenced component path from the listing requires inspection, or
-   - (b) Creating a new component under `.libs/`.
-3. Never scan the entire repository to "see what's there"; derive actions from the MCP component list and explicit user requirements only.
-4. If additional context seems useful but not strictly required, ask for confirmation instead of exploring.
-5. Disallow bulk file enumeration commands (`find .`, `ls -R`, `grep -R`) unless user explicitly requests a cross-cutting search.
-6. If a task cannot proceed without unknown components, explain missing component(s) and propose their creation rather than exploratory scanning.
-7. **NEVER use manual CLI scripts, file scanning, or directory walking for component discovery - ONLY use MCP tools.**
+Exploration is constrained to what is necessary for the immediate task, and **MUST use MCP tools as the primary source of truth**.
+
+### Component Discovery Rules (NON-NEGOTIABLE)
+
+1. **Primary Source**: MCP component listing output is the ONLY source for component discovery
+   - ✅ Use MCP `list_components` tool
+   - ✅ Use MCP `get_details` tool
+   - ❌ Do NOT use file system scanning
+   - ❌ Do NOT read index.yaml files directly
+   - ❌ Do NOT use find/ls/grep/tree commands for discovery
+
+2. **When You Can Read Files**:
+   - ✅ ONLY when inspecting a component path already identified by MCP tools
+   - ✅ ONLY when creating a new component under `.libs/`
+   - ❌ NEVER for discovery purposes
+   - ❌ NEVER to "explore what's available"
+
+3. **Repository Exploration**:
+   - ❌ NEVER scan the entire repository to "see what's there"
+   - ✅ Derive ALL actions from MCP component list and explicit user requirements
+   - ❌ Do NOT browse directories speculatively
+
+4. **Asking vs. Exploring**:
+   - ✅ If additional context seems useful but not strictly required, ask the user for confirmation
+   - ❌ Do NOT explore proactively
+
+5. **Bulk Operations**:
+   - ❌ FORBIDDEN: `find .`, `ls -R`, `grep -R`, `tree` for component discovery
+   - ✅ Exception: User explicitly requests a cross-cutting search for non-discovery purposes
+
+6. **Missing Components**:
+   - ✅ If a task cannot proceed without unknown components, explain missing component(s) and propose their creation
+   - ❌ Do NOT scan the file system to find components
+   - ✅ Use MCP tools to verify if component exists before creating
+
+### Enforcement Examples
+
+**❌ WRONG - Manual Scanning:**
+```bash
+find .libs -name "index.yaml"
+ls .libs/
+cat .libs/index.yaml
+grep -r "gmail" .libs/
+```
+
+**✅ CORRECT - MCP Tools:**
+```
+Use MCP list_components tool
+Use MCP get_details tool with component name
+```
+
+### Summary
+**If you find yourself using Read, Bash, Grep, Glob, or Find to discover components, STOP immediately. You are violating the MCP-first architecture. Use MCP tools instead.**
